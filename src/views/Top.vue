@@ -2,6 +2,9 @@
   <div class="home">
     <h1>アンケートフォーム</h1>
     <div class="questionary__form">
+      <div v-if='errorState.name'>
+        <label>{{ errorState.name }}</label>
+      </div>
       <TextInput
         placeholder='名前'
         :value="state.name"
@@ -20,6 +23,9 @@
         @onChange="onChangeForm($event,'age')"
        />
 
+      <div v-if='errorState.email'>
+        <label>{{ errorState.email }}</label>
+      </div>
       <TextInput
         placeholder='メールアドレス'
         :value="state.email"
@@ -37,6 +43,9 @@
         @onChange="onChangeForm($event,'gender')"
       />
 
+      <div v-if='errorState.demand'>
+        <label>{{ errorState.demand }}</label>
+      </div>
       <TextAreaInput
         row=5
         col=30
@@ -72,9 +81,7 @@ interface State {
 
 interface ErrorState {
   name: string;
-  age: string;
   email: string;
-  gender: string;
   demand: string;
 }
 
@@ -96,7 +103,7 @@ export default defineComponent({
       { label: '男', value: '1' },
       { label: '女', value: '2' },
     ];
-    console.log('top');
+
     const state = reactive<State>({
       name: '',
       age: '1',
@@ -107,16 +114,11 @@ export default defineComponent({
 
     const errorState = reactive<ErrorState>({
       name: '',
-      age: '',
       email: '',
-      gender: '',
       demand: '',
     });
 
     const onChangeForm = (value: string, type: string) => {
-      console.log('onchange');
-      console.log(value);
-      console.log(type);
       switch (type) {
         case 'name': {
           state.name = value;
@@ -145,22 +147,44 @@ export default defineComponent({
       }
     };
 
-    const getError = (formValue: State, errorMessage: ErrorState) => {
-      console.log(formValue, errorMessage);
+    // const extractErrorMessage = (obj: any): void => {
+    //   console.log('ext');
 
+    //   obj.map((o: any) => o.key === );
+    // };
+
+    const setErrorMessages = (errorMessages: ErrorState): void => {
+      errorState.name = errorMessages.name;
+      errorState.email = errorMessages.email;
+      errorState.demand = errorMessages.demand;
+    };
+
+    const getError = (formValue: State, errorMessages: ErrorState): ErrorState => {
       const {
         name, age, email, gender, demand,
       } = formValue;
 
-      name ? 
+      let {
+        name: nameError, email: emailError, demand: demandError,
+      } = errorMessages;
+
+      nameError = !name ? '必須項目です' : '';
+      emailError = !email || !email.match(/^[A-Za-z0-9]{1}[A-Za-z0-9_.-]*@{1}[A-Za-z0-9_.-]{1,}\.[A-Za-z0-9]{1,}$/) ? '形式が違います' : '';
+      demandError = !demand ? '必須項目です' : '';
+
+      // extractErrorMessage([nameError, emailError, demandError]);
+
+      return { name: nameError, email: emailError, demand: demandError };
     };
 
-    const sendForm = () => {
-      getError(state, errorState);
+    const sendForm = (): void => {
+      const errorMessages = getError(state, errorState);
+      setErrorMessages(errorMessages);
     };
 
     return {
       state,
+      errorState,
       onChangeForm,
       genderOptions,
       sendForm,
