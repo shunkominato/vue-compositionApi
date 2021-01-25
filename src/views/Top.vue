@@ -172,8 +172,6 @@ export default defineComponent({
       emailError = !email || !email.match(/^[A-Za-z0-9]{1}[A-Za-z0-9_.-]*@{1}[A-Za-z0-9_.-]{1,}\.[A-Za-z0-9]{1,}$/) ? '形式が違います' : '';
       demandError = !demand ? '必須項目です' : '';
 
-      // extractErrorMessage([nameError, emailError, demandError]);
-
       return { name: nameError, email: emailError, demand: demandError };
     };
 
