@@ -33,12 +33,11 @@ export default defineComponent({
   },
 
   setup(props, context) {
-    console.log('asd');
-    console.log(props);
-    console.log(context);
-    const onChange = (e: any) => {
-      console.log(e.target.value);
-      context.emit('onChange', e.target.value);
+    const onChange = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        console.log(e.target.value);
+        context.emit('onChange', e.target.value);
+      }
     };
 
     return {
