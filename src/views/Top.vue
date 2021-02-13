@@ -79,11 +79,15 @@ interface State {
   demand: string;
 }
 
-interface ErrorState {
-  name: string;
-  email: string;
-  demand: string;
-}
+// interface ErrorState {
+//   name: string;
+//   email: string;
+//   demand: string;
+// }
+type ErrorType = 'name' | 'email' | 'demand';
+type ErrorState = {
+  [key in ErrorType]?: string;
+};
 
 interface Options {
   labal: string;
@@ -189,6 +193,29 @@ export default defineComponent({
     };
   },
 });
+
+function useValidate() {
+  const errorState = reactive<ErrorState>({});
+  function validate(type: ErrorType, value: string){
+    const m = ((): string =>{switch(type){
+        case 'name':
+            return !value ? '必須項目です' : '';
+        case 'email':
+            return !value ? '必須項目です' : '';
+        case 'demand':
+            return !value ? '必須項目です' : '';
+        default:
+            ((a: never)=>{throw new Error(a)})(type);
+    }})();
+    errorState[type] = m;
+  }
+
+  function getMessage(type: ErrorType){
+    return errorState[type] || ''
+  }
+
+  return  {validate, getMessage};
+}
 </script>
 
 <style scoped lang="scss">
