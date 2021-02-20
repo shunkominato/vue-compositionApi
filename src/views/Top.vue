@@ -58,7 +58,7 @@
       <FormButton
         btnLabel="送信"
         className='questionary-button'
-        @click="sendForm()"
+        @click="send()"
       />
     </div>
   </div>
@@ -78,6 +78,10 @@ interface State {
   gender: string;
   demand: string;
 }
+type FormStateType = 'name' | 'age' | 'email' | 'gender' | 'demand';
+type FormState = {
+  [key in FormStateType]?: string;
+};
 
 // interface ErrorState {
 //   name: string;
@@ -94,6 +98,75 @@ interface Options {
   value: string;
 }
 
+function useValidate() {
+  const errorState = reactive<ErrorState>({});
+  function validate(type: ErrorType, value: string) {
+    const m: string = (() => {
+      switch (type) {
+        case 'name':
+          return !value ? '必須項目です' : '';
+        case 'email':
+          return !value ? '必須項目です' : '';
+        case 'demand':
+          return !value ? '必須項目です' : '';
+        default:
+          // ((a: never) => { throw new Error(a); })(type);
+          return '';
+      }
+    })();
+    errorState[type] = m;
+  }
+
+  function getMessage(type: ErrorType) {
+    return errorState[type] || '';
+  }
+
+  return { validate, getMessage };
+}
+
+function useInputForm() {
+  const state = reactive<FormState>({});
+  const onChangeForm = (value: string, type: string) => {
+    console.log(type);
+    switch (type) {
+      case 'name': {
+        state.name = value;
+        break;
+      }
+      case 'age': {
+        state.age = value;
+        break;
+      }
+      case 'email': {
+        state.email = value;
+        break;
+      }
+      case 'gender': {
+        state.gender = value;
+        break;
+      }
+      case 'demand': {
+        state.demand = value;
+        break;
+      }
+      default: {
+        console.log('err');
+        break;
+      }
+    }
+  };
+
+  return { onChangeForm };
+}
+
+function useSendForm() {
+  const send = () => {
+    //バリデーションチェック
+  };
+
+  return { send };
+}
+
 export default defineComponent({
   name: 'Top',
   components: {
@@ -103,6 +176,9 @@ export default defineComponent({
     TextAreaInput,
   },
   setup() {
+    const { validate, getMessage } = useValidate();
+    const { onChangeForm } = useInputForm();
+    const { send } = useSendForm();
     const genderOptions = [
       { label: '男', value: '1' },
       { label: '女', value: '2' },
@@ -122,100 +198,30 @@ export default defineComponent({
       demand: '',
     });
 
-    const onChangeForm = (value: string, type: string) => {
-      switch (type) {
-        case 'name': {
-          state.name = value;
-          break;
-        }
-        case 'age': {
-          state.age = value;
-          break;
-        }
-        case 'email': {
-          state.email = value;
-          break;
-        }
-        case 'gender': {
-          state.gender = value;
-          break;
-        }
-        case 'demand': {
-          state.demand = value;
-          break;
-        }
-        default: {
-          console.log('err');
-          break;
-        }
-      }
-    };
-
     // const extractErrorMessage = (obj: any): void => {
     //   console.log('ext');
 
     //   obj.map((o: any) => o.key === );
     // };
 
-    const setErrorMessages = (errorMessages: ErrorState): void => {
-      errorState.name = errorMessages.name;
-      errorState.email = errorMessages.email;
-      errorState.demand = errorMessages.demand;
-    };
-
-    const getError = (formValue: State, errorMessages: ErrorState): ErrorState => {
-      const {
-        name, age, email, gender, demand,
-      } = formValue;
-
-      let {
-        name: nameError, email: emailError, demand: demandError,
-      } = errorMessages;
-
-      nameError = !name ? '必須項目です' : '';
-      emailError = !email || !email.match(/^[A-Za-z0-9]{1}[A-Za-z0-9_.-]*@{1}[A-Za-z0-9_.-]{1,}\.[A-Za-z0-9]{1,}$/) ? '形式が違います' : '';
-      demandError = !demand ? '必須項目です' : '';
-
-      return { name: nameError, email: emailError, demand: demandError };
-    };
-
-    const sendForm = (): void => {
-      const errorMessages = getError(state, errorState);
-      setErrorMessages(errorMessages);
-    };
+    // const setErrorMessages = (errorMessages: ErrorState): void => {
+    //   errorState.name = errorMessages.name;
+    //   errorState.email = errorMessages.email;
+    //   errorState.demand = errorMessages.demand;
+    // };
 
     return {
       state,
       errorState,
       onChangeForm,
       genderOptions,
-      sendForm,
+      // sendForm,
+      validate,
+      getMessage,
+      send,
     };
   },
 });
-
-function useValidate() {
-  const errorState = reactive<ErrorState>({});
-  function validate(type: ErrorType, value: string){
-    const m = ((): string =>{switch(type){
-        case 'name':
-            return !value ? '必須項目です' : '';
-        case 'email':
-            return !value ? '必須項目です' : '';
-        case 'demand':
-            return !value ? '必須項目です' : '';
-        default:
-            ((a: never)=>{throw new Error(a)})(type);
-    }})();
-    errorState[type] = m;
-  }
-
-  function getMessage(type: ErrorType){
-    return errorState[type] || ''
-  }
-
-  return  {validate, getMessage};
-}
 </script>
 
 <style scoped lang="scss">
