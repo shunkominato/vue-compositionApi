@@ -2,6 +2,7 @@
   <div class="home">
     <h1>アンケートフォーム</h1>
     <div class="questionary__form">
+      <p>{{ errorState.name }}</p>
       <div v-if='errorState.name'>
         <label>{{ errorState.name }}</label>
       </div>
@@ -58,7 +59,7 @@
       <FormButton
         btnLabel="送信"
         className='questionary-button'
-        @click="send()"
+        @click="send(state.email)"
       />
     </div>
   </div>
@@ -99,9 +100,15 @@ interface Options {
 }
 
 function useValidate() {
-  const errorState = reactive<ErrorState>({});
+  const errorState = reactive<ErrorState>({
+    name: '',
+    email: '',
+    demand: '',
+  });
   function validate(type: ErrorType, value: string) {
     const m: string = (() => {
+      console.log(type);
+      console.log(value);
       switch (type) {
         case 'name':
           return !value ? '必須項目です' : '';
@@ -121,13 +128,12 @@ function useValidate() {
     return errorState[type] || '';
   }
 
-  return { validate, getMessage };
+  return { validate, getMessage, errorState };
 }
 
-function useInputForm() {
-  const state = reactive<FormState>({});
+function useInputForm(state: State) {
+  // const state = reactive<FormState>({});
   const onChangeForm = (value: string, type: string) => {
-    console.log(type);
     switch (type) {
       case 'name': {
         state.name = value;
@@ -156,12 +162,16 @@ function useInputForm() {
     }
   };
 
-  return { onChangeForm };
+  return { onChangeForm, state };
 }
 
-function useSendForm() {
+function useSendForm(state: State) {
   const send = () => {
-    //バリデーションチェック
+    console.log(state);
+    const { validate, getMessage } = useValidate();
+    validate('name', state.name);
+    const aa = getMessage('name');
+    console.log(aa);
   };
 
   return { send };
@@ -176,14 +186,6 @@ export default defineComponent({
     TextAreaInput,
   },
   setup() {
-    const { validate, getMessage } = useValidate();
-    const { onChangeForm } = useInputForm();
-    const { send } = useSendForm();
-    const genderOptions = [
-      { label: '男', value: '1' },
-      { label: '女', value: '2' },
-    ];
-
     const state = reactive<State>({
       name: '',
       age: '1',
@@ -191,12 +193,19 @@ export default defineComponent({
       gender: '1',
       demand: '',
     });
+    const { onChangeForm } = useInputForm(state);
+    const { send } = useSendForm(state);
+    const { validate, getMessage, errorState } = useValidate();
+    const genderOptions = [
+      { label: '男', value: '1' },
+      { label: '女', value: '2' },
+    ];
 
-    const errorState = reactive<ErrorState>({
-      name: '',
-      email: '',
-      demand: '',
-    });
+    // const errorState = reactive<ErrorState>({
+    //   name: '',
+    //   email: '',
+    //   demand: '',
+    // });
 
     // const extractErrorMessage = (obj: any): void => {
     //   console.log('ext');
@@ -212,12 +221,13 @@ export default defineComponent({
 
     return {
       state,
-      errorState,
+      // errorState,
       onChangeForm,
       genderOptions,
       // sendForm,
       validate,
       getMessage,
+      errorState,
       send,
     };
   },
