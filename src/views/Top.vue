@@ -2,6 +2,7 @@
   <div class="home">
     <h1>アンケートフォーム</h1>
     <div class="questionary__form">
+      <p>{{ nameError }}</p>
       <div v-if='errorState.name'>
         <label>{{ errorState.name }}</label>
       </div>
@@ -58,14 +59,19 @@
       <FormButton
         btnLabel="送信"
         className='questionary-button'
-        @click="sendForm()"
+        @click="send(state.email)"
       />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from 'vue';
+import {
+  defineComponent,
+  isReactive,
+  reactive,
+  watch,
+} from 'vue';
 import TextInput from '../components/Uikit/TextInput.vue';
 import TextAreaInput from '../components/Uikit/TextAreaInput.vue';
 import RadioButton from '../components/Uikit/RadioButton.vue';
@@ -78,16 +84,100 @@ interface State {
   gender: string;
   demand: string;
 }
+type FormStateType = 'name' | 'age' | 'email' | 'gender' | 'demand';
+type FormState = {
+  [key in FormStateType]?: string;
+};
 
-interface ErrorState {
-  name: string;
-  email: string;
-  demand: string;
-}
+// interface ErrorState {
+//   name: string;
+//   email: string;
+//   demand: string;
+// }
+type ErrorType = 'name' | 'email' | 'demand';
+type ErrorState = {
+  [key in ErrorType]?: string;
+};
 
 interface Options {
   labal: string;
   value: string;
+}
+
+function useValidate() {
+  const errorState = reactive<ErrorState>({
+    name: '',
+    email: '',
+    demand: '',
+  });
+  function validate(type: ErrorType, value: string) {
+    const m: string = (() => {
+      switch (type) {
+        case 'name':
+          return !value ? '必須項目です' : '';
+        case 'email':
+          return !value ? '必須項目です' : '';
+        case 'demand':
+          return !value ? '必須項目です' : '';
+        default:
+          // ((a: never) => { throw new Error(a); })(type);
+          return '';
+      }
+    })();
+    errorState[type] = m;
+    console.log(isReactive(errorState));
+  }
+
+  function getMessage(type: ErrorType) {
+    return errorState[type] || '';
+  }
+
+  return { validate, getMessage, errorState };
+}
+
+function useInputForm(state: State) {
+  // const state = reactive<FormState>({});
+  const onChangeForm = (value: string, type: string) => {
+    switch (type) {
+      case 'name': {
+        state.name = value;
+        break;
+      }
+      case 'age': {
+        state.age = value;
+        break;
+      }
+      case 'email': {
+        state.email = value;
+        break;
+      }
+      case 'gender': {
+        state.gender = value;
+        break;
+      }
+      case 'demand': {
+        state.demand = value;
+        break;
+      }
+      default: {
+        console.log('err');
+        break;
+      }
+    }
+  };
+
+  return { onChangeForm, state };
+}
+
+function useSendForm(state: State) {
+  const send = () => {
+    const { validate, getMessage } = useValidate();
+    validate('name', state.name);
+    const aa = getMessage('name');
+    console.log(aa);
+  };
+
+  return { send };
 }
 
 export default defineComponent({
@@ -99,11 +189,6 @@ export default defineComponent({
     TextAreaInput,
   },
   setup() {
-    const genderOptions = [
-      { label: '男', value: '1' },
-      { label: '女', value: '2' },
-    ];
-
     const state = reactive<State>({
       name: '',
       age: '1',
@@ -111,41 +196,27 @@ export default defineComponent({
       gender: '1',
       demand: '',
     });
+    const { onChangeForm } = useInputForm(state);
+    const { send } = useSendForm(state);
+    const { validate, getMessage, errorState } = useValidate();
+    const genderOptions = [
+      { label: '男', value: '1' },
+      { label: '女', value: '2' },
+    ];
 
-    const errorState = reactive<ErrorState>({
-      name: '',
-      email: '',
-      demand: '',
+    let nameError = '';
+    watch([errorState.name], () => {
+      console.log('errorState');
+      console.log(errorState);
+      nameError = getMessage('name');
     });
+    // const nameError = computed(() => getMessage('name'));
 
-    const onChangeForm = (value: string, type: string) => {
-      switch (type) {
-        case 'name': {
-          state.name = value;
-          break;
-        }
-        case 'age': {
-          state.age = value;
-          break;
-        }
-        case 'email': {
-          state.email = value;
-          break;
-        }
-        case 'gender': {
-          state.gender = value;
-          break;
-        }
-        case 'demand': {
-          state.demand = value;
-          break;
-        }
-        default: {
-          console.log('err');
-          break;
-        }
-      }
-    };
+    // const errorState = reactive<ErrorState>({
+    //   name: '',
+    //   email: '',
+    //   demand: '',
+    // });
 
     // const extractErrorMessage = (obj: any): void => {
     //   console.log('ext');
@@ -153,39 +224,23 @@ export default defineComponent({
     //   obj.map((o: any) => o.key === );
     // };
 
-    const setErrorMessages = (errorMessages: ErrorState): void => {
-      errorState.name = errorMessages.name;
-      errorState.email = errorMessages.email;
-      errorState.demand = errorMessages.demand;
-    };
-
-    const getError = (formValue: State, errorMessages: ErrorState): ErrorState => {
-      const {
-        name, age, email, gender, demand,
-      } = formValue;
-
-      let {
-        name: nameError, email: emailError, demand: demandError,
-      } = errorMessages;
-
-      nameError = !name ? '必須項目です' : '';
-      emailError = !email || !email.match(/^[A-Za-z0-9]{1}[A-Za-z0-9_.-]*@{1}[A-Za-z0-9_.-]{1,}\.[A-Za-z0-9]{1,}$/) ? '形式が違います' : '';
-      demandError = !demand ? '必須項目です' : '';
-
-      return { name: nameError, email: emailError, demand: demandError };
-    };
-
-    const sendForm = (): void => {
-      const errorMessages = getError(state, errorState);
-      setErrorMessages(errorMessages);
-    };
+    // const setErrorMessages = (errorMessages: ErrorState): void => {
+    //   errorState.name = errorMessages.name;
+    //   errorState.email = errorMessages.email;
+    //   errorState.demand = errorMessages.demand;
+    // };
 
     return {
       state,
-      errorState,
+      // errorState,
       onChangeForm,
       genderOptions,
-      sendForm,
+      // sendForm,
+      validate,
+      getMessage,
+      errorState,
+      send,
+      nameError,
     };
   },
 });
