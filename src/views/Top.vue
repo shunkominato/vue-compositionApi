@@ -2,7 +2,7 @@
   <div class="home">
     <h1>アンケートフォーム</h1>
     <div class="questionary__form">
-      <p>{{ errorState.name }}</p>
+      <p>{{ nameError }}</p>
       <div v-if='errorState.name'>
         <label>{{ errorState.name }}</label>
       </div>
@@ -66,7 +66,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from 'vue';
+import {
+  defineComponent,
+  isReactive,
+  reactive,
+  watch,
+} from 'vue';
 import TextInput from '../components/Uikit/TextInput.vue';
 import TextAreaInput from '../components/Uikit/TextAreaInput.vue';
 import RadioButton from '../components/Uikit/RadioButton.vue';
@@ -107,8 +112,6 @@ function useValidate() {
   });
   function validate(type: ErrorType, value: string) {
     const m: string = (() => {
-      console.log(type);
-      console.log(value);
       switch (type) {
         case 'name':
           return !value ? '必須項目です' : '';
@@ -122,6 +125,7 @@ function useValidate() {
       }
     })();
     errorState[type] = m;
+    console.log(isReactive(errorState));
   }
 
   function getMessage(type: ErrorType) {
@@ -167,7 +171,6 @@ function useInputForm(state: State) {
 
 function useSendForm(state: State) {
   const send = () => {
-    console.log(state);
     const { validate, getMessage } = useValidate();
     validate('name', state.name);
     const aa = getMessage('name');
@@ -201,6 +204,14 @@ export default defineComponent({
       { label: '女', value: '2' },
     ];
 
+    let nameError = '';
+    watch([errorState.name], () => {
+      console.log('errorState');
+      console.log(errorState);
+      nameError = getMessage('name');
+    });
+    // const nameError = computed(() => getMessage('name'));
+
     // const errorState = reactive<ErrorState>({
     //   name: '',
     //   email: '',
@@ -229,6 +240,7 @@ export default defineComponent({
       getMessage,
       errorState,
       send,
+      nameError,
     };
   },
 });
